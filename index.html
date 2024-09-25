@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <title>math arcade</title>
+    <center>
+        <h1>math arcade</h1>
+    </center>
+    <my-math first="4" second="4" maxFirst="8" maxSecond="8" constructed="false"></my-math>
+
+    <script type="module">
+
+        import { LitElement, html, css } from 'https://cdn.jsdelivr.net/gh/lit/dist@2/core/lit-core.min.js';
+
+
+customElements.define('my-math', 
+class Math extends LitElement {
+    static properties = {
+        first: { type: Number },
+        second: { type: Number },
+        maxFirst: { type: Number },
+        maxSecond: { type: Number },
+        answerStatus: { type: String },
+        table: { type: Array },
+        constructed: { type: Boolean },
+        gameOver: { type: Boolean },
+        timeLeft: { type: Number },
+
+    }
+
+    static styles = css`
+    main {
+        font-family: Arial, Helvetica, sans-serif;
+        padding: 20px;
+        width: 300px;
+        border: 4px solid black;
+        box-shadow: 10px 10px 5px grey;
+        margin: 20px auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        position: relative;
+    }
+        h1 {
+            color: blue;
+        }
+        .answer-status{
+            font-weight: bold;
+            width: 300px;
+            text-align: center;
+        }
+        form{
+            border: 1px solid black;
+            margin: 10px;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 300px;
+
+            
+        }
+        form > *{
+            margin: 4px;
+        }
+        h1.correct{
+            color: green;
+        }
+        h1.wrong{
+            color: red;
+        }
+
+        table{
+            border-collapse: collapse;
+            border: 1px solid black;
+            width: 100%;
+            margin-top: 20px;
+            text-align: center;
+            width: 300px;
+            margin: 10px;
+
+
+
+            tr{
+                border: 1px solid black;
+                padding: 5px;
+
+                td{
+                    border: 1px solid black;
+                    padding: 5px;
+                }
+            }
+        }
+        td{
+            transition: background-color 1s;
+        }
+            td.completed{
+                background-color: lightgreen;
+                color : green;
+            }
+
+            .time-left{
+                font-weight: bold; 
+                position: absolute; 
+                top: 0; 
+                left: 0;
+                padding: 4px;
+            }
+    `
+
+
+    answer() {
+        const result = parseInt(this.first) * parseInt(this.second)
+        const answer = parseInt(this.shadowRoot.getElementById('result').value)
+
+        if (answer == result) {
+            this.table[this.first-1][this.second-1] = answer
+            this.first += 1
+            //move to next row if needed
+            if (this.first > this.maxFirst) {
+                this.first = 1
+                this.second += 1
+                if (this.second > this.maxSecond) {
+                    this.gameOver = true
+                }
+            }
+
+            this.answerStatus = 'correct'
+        } else {
+            this.answerStatus = 'wrong'
+        }
+    }
+
+
+    makeTable() {
+        const table = []
+        for (let firstIndex = 0; firstIndex < this.maxFirst; firstIndex++) {
+            table.push([])
+            for (let secondIndex = 0; secondIndex < this.maxSecond; secondIndex++) {
+                table[table.length - 1].push("?") 
+            }     
+        } 
+        console.log(this.maxFirst, this.maxSecond)
+        console.log(table)
+        return table 
+    }
+    connectedCallback() {
+        super.connectedCallback()
+        this.table = this.makeTable()
+        this.timeLeft = 100
+        setInterval(() => {
+            this.timeDown()
+        }, 1000)
+    }
+
+    timeDown() {
+        this.timeLeft -= 1
+        if (this.timeLeft == 0) {
+            this.gameOver = true
+        }
+    }
+
+    render() {
+
+        if (this.gameOver) {
+            return html`
+                <main>
+                    <h1 >Game Over</h1>
+                </main>
+            `
+        }
+
+        return html`
+        <main>
+            <p class="time-left">Time left: ${this.timeLeft}</p>
+            <h1 class="${this.answerStatus} answer-status">${this.answerStatus}</h1>
+
+            <table>
+                ${this.table.map((row, rowIndex) => html`
+                    <tr>
+                        ${row.map((cell, cellIndex) => html`
+                            <td class="${cell == "?" ? "" : "completed"}">${cell}</td>
+                        `)}
+                    </tr>
+                `)}
+                </table>
+
+            <form >
+                <label >
+                    what is ${this.first} * ${this.second}    
+                    </label> 
+                    <br>   
+                    <input type="text" id="result">
+                    <br>
+                    <button @click=${(event) => {event.preventDefault(); this.answer()}}>Add</button>
+                    </form>
+            </main>
+        `
+    }
+    
+
+})
+    </script>
+</body>
+</html>
